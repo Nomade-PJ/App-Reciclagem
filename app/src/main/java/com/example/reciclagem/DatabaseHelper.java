@@ -17,6 +17,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_ID_PONTO = "id";
     public static final String COLUMN_NOME_PONTO = "nome";
     public static final String COLUMN_ENDERECO = "endereco";
+    public static final String COLUMN_MATERIAIS = "materiais";
 
     // Tabela de Materiais
     public static final String TABLE_MATERIAIS = "materiais";
@@ -33,7 +34,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String CREATE_PONTOS_TABLE = "CREATE TABLE " + TABLE_PONTOS_COLETA + "("
                 + COLUMN_ID_PONTO + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + COLUMN_NOME_PONTO + " TEXT,"
-                + COLUMN_ENDERECO + " TEXT"
+                + COLUMN_ENDERECO + " TEXT,"
+                + COLUMN_MATERIAIS + " TEXT"
                 + ")";
         db.execSQL(CREATE_PONTOS_TABLE);
 
@@ -52,11 +54,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public void addPontoColeta(String nome, String endereco) {
+    public void addPontoColeta(String nome, String endereco, String materiais) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_NOME_PONTO, nome);
         values.put(COLUMN_ENDERECO, endereco);
+        values.put(COLUMN_MATERIAIS, materiais);
         db.insert(TABLE_PONTOS_COLETA, null, values);
         db.close();
     }
@@ -72,7 +75,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 int id = cursor.getInt(cursor.getColumnIndex(COLUMN_ID_PONTO));
                 String nome = cursor.getString(cursor.getColumnIndex(COLUMN_NOME_PONTO));
                 String endereco = cursor.getString(cursor.getColumnIndex(COLUMN_ENDERECO));
-                pontosColeta.add(new PontoColeta(id, nome, endereco));
+                String materiais = cursor.getString(cursor.getColumnIndex(COLUMN_MATERIAIS));
+                pontosColeta.add(new PontoColeta(id, nome, endereco, materiais));
             } while (cursor.moveToNext());
         }
         cursor.close();
@@ -106,5 +110,40 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return materiais;
+    }
+
+    public void atualizarPontoColeta(int id, String novoNome, String novoEndereco, String novosMateriais) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NOME_PONTO, novoNome);
+        values.put(COLUMN_ENDERECO, novoEndereco);
+        values.put(COLUMN_MATERIAIS, novosMateriais);
+        db.update(TABLE_PONTOS_COLETA, values, COLUMN_ID_PONTO + " = ?",
+                new String[]{String.valueOf(id)});
+        db.close();
+    }
+
+    public void atualizarMaterial(int id, String novoNome, String novaDescricao) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NOME_MATERIAL, novoNome);
+        values.put(COLUMN_DESCRICAO, novaDescricao);
+        db.update(TABLE_MATERIAIS, values, COLUMN_ID_MATERIAL + " = ?",
+                new String[]{String.valueOf(id)});
+        db.close();
+    }
+
+    public void deletarPontoColeta(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_PONTOS_COLETA, COLUMN_ID_PONTO + " = ?",
+                new String[]{String.valueOf(id)});
+        db.close();
+    }
+
+    public void deletarMaterial(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_MATERIAIS, COLUMN_ID_MATERIAL + " = ?",
+                new String[]{String.valueOf(id)});
+        db.close();
     }
 } 

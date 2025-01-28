@@ -15,6 +15,7 @@ import java.util.List;
 public class PontosColetaActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private Button btnAddPonto;
+    private Button btnExcluir;
     private PontosColetaAdapter adapter;
     private DatabaseHelper dbHelper;
 
@@ -27,12 +28,14 @@ public class PontosColetaActivity extends AppCompatActivity {
         
         recyclerView = findViewById(R.id.recyclerView);
         btnAddPonto = findViewById(R.id.btnAddPonto);
+        btnExcluir = findViewById(R.id.btnExcluir);
         
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new PontosColetaAdapter(new ArrayList<>());
+        adapter = new PontosColetaAdapter(new ArrayList<>(), dbHelper);
         recyclerView.setAdapter(adapter);
 
         btnAddPonto.setOnClickListener(v -> showAddPontoDialog());
+        btnExcluir.setOnClickListener(v -> toggleModoExclusao());
 
         loadPontosColeta();
     }
@@ -44,21 +47,49 @@ public class PontosColetaActivity extends AppCompatActivity {
         
         EditText editTextNome = dialogView.findViewById(R.id.editTextNome);
         EditText editTextEndereco = dialogView.findViewById(R.id.editTextEndereco);
+        EditText editTextMateriais = dialogView.findViewById(R.id.editTextMateriais);
 
         builder.setView(dialogView)
                 .setTitle("Adicionar Ponto de Coleta")
                 .setPositiveButton("Adicionar", (dialog, id) -> {
                     String nome = editTextNome.getText().toString();
                     String endereco = editTextEndereco.getText().toString();
+                    String materiais = editTextMateriais.getText().toString();
                     
                     if (!nome.isEmpty() && !endereco.isEmpty()) {
-                        dbHelper.addPontoColeta(nome, endereco);
+                        dbHelper.addPontoColeta(nome, endereco, materiais);
                         loadPontosColeta();
                     }
                 })
                 .setNegativeButton("Cancelar", null);
 
         builder.create().show();
+    }
+
+    private void toggleModoExclusao() {
+        if (!adapter.modoExclusao) {
+            // Ativa modo exclusão
+            adapter.setModoExclusao(true);
+            btnExcluir.setText("Confirmar Exclusão");
+            btnAddPonto.setEnabled(false);
+        } else {
+            // Confirma exclusão
+            new AlertDialog.Builder(this)
+                .setTitle("Confirmar Exclusão")
+                .setMessage("Deseja realmente excluir os itens selecionados?")
+                .setPositiveButton("Sim", (dialog, which) -> {
+                    adapter.excluirItensSelecionados();
+                    loadPontosColeta();
+                    btnExcluir.setText("Excluir");
+                    btnAddPonto.setEnabled(true);
+                })
+                .setNegativeButton("Não", (dialog, which) -> {
+                    adapter.setModoExclusao(false);
+                    btnExcluir.setText("Excluir");
+                    btnAddPonto.setEnabled(true);
+                })
+                .show();
+        }
     }
 
     private void loadPontosColeta() {

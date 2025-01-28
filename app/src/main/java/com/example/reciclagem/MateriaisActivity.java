@@ -15,6 +15,7 @@ import java.util.List;
 public class MateriaisActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private Button btnAddMaterial;
+    private Button btnExcluir;
     private MateriaisAdapter adapter;
     private DatabaseHelper dbHelper;
 
@@ -27,12 +28,14 @@ public class MateriaisActivity extends AppCompatActivity {
         
         recyclerView = findViewById(R.id.recyclerView);
         btnAddMaterial = findViewById(R.id.btnAddMaterial);
+        btnExcluir = findViewById(R.id.btnExcluir);
         
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new MateriaisAdapter(new ArrayList<>());
+        adapter = new MateriaisAdapter(new ArrayList<>(), dbHelper);
         recyclerView.setAdapter(adapter);
 
         btnAddMaterial.setOnClickListener(v -> showAddMaterialDialog());
+        btnExcluir.setOnClickListener(v -> toggleModoExclusao());
 
         loadMateriais();
     }
@@ -64,5 +67,31 @@ public class MateriaisActivity extends AppCompatActivity {
     private void loadMateriais() {
         List<Material> materiais = dbHelper.getAllMateriais();
         adapter.atualizarDados(materiais);
+    }
+
+    private void toggleModoExclusao() {
+        if (!adapter.modoExclusao) {
+            // Ativa modo exclusão
+            adapter.setModoExclusao(true);
+            btnExcluir.setText("Confirmar Exclusão");
+            btnAddMaterial.setEnabled(false);
+        } else {
+            // Confirma exclusão
+            new AlertDialog.Builder(this)
+                .setTitle("Confirmar Exclusão")
+                .setMessage("Deseja realmente excluir os itens selecionados?")
+                .setPositiveButton("Sim", (dialog, which) -> {
+                    adapter.excluirItensSelecionados();
+                    loadMateriais();
+                    btnExcluir.setText("Excluir");
+                    btnAddMaterial.setEnabled(true);
+                })
+                .setNegativeButton("Não", (dialog, which) -> {
+                    adapter.setModoExclusao(false);
+                    btnExcluir.setText("Excluir");
+                    btnAddMaterial.setEnabled(true);
+                })
+                .show();
+        }
     }
 } 
